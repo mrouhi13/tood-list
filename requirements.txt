@@ -1,0 +1,13 @@
+django==3.2.12
+djangorestframework==3.12.4
+djangorestframework-simplejwt==5.0.0
+django-filter==21.1
+django-rest-resetpassword==0.1.2
+django-redis==5.0.0
+psycopg2-binary==2.9.3
+python-decouple==3.5
+coreapi==2.3.3
+pytest-django==4.4.0
+pytest-cov==3.0.0
+pytest-xdist==2.4.0
+flake8==4.0.1

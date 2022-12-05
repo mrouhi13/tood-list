@@ -1,0 +1,110 @@
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
+variables:
+  CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+
+flake8:
+  image: python:3.9-alpine
+  stage: lint
+  tags:
+    - build
+  script:
+    - pip install flake8
+    - flake8 source/
+
+testing:
+  image: python:3.9-alpine
+  services:
+    - name: postgis/postgis:13-3.1-alpine
+      alias: postgres
+    - name: redis:alpine
+  variables:
+    POSTGRES_DB: $POSTGRES_DB
+    POSTGRES_USER: $POSTGRES_USER
+    POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+  stage: test
+  tags:
+    - build
+  environment: staging
+  script:
+    - apk update && apk add gcc make python3-dev musl-dev libc-dev postgresql-dev jpeg-dev zlib-dev geos geos-dev gdal gdal-dev
+    - pip install -r requirements/testing.txt
+    - pytest source/ --junitxml=report.xml
+    - coverage report
+    - coverage xml
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+      junit: report.xml
+
+build:
+  services:
+    - docker:20.10.7-dind
+  stage: build
+  tags:
+    - build
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $CONTAINER_RELEASE_IMAGE || true
+    - docker build --cache-from $CONTAINER_RELEASE_IMAGE --tag $CONTAINER_TEST_IMAGE --tag $CONTAINER_RELEASE_IMAGE --file Dockerfile --build-arg ENVIRONMENT=production .
+    - docker push $CONTAINER_TEST_IMAGE
+    - docker push $CONTAINER_RELEASE_IMAGE
+
+staging:
+  stage: deploy
+  tags:
+    - staging
+  environment: staging
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker-compose -p backend_staging -f docker-compose.staging.yml pull
+    - docker-compose -p backend_staging -f docker-compose.staging.yml up -d
+  only:
+    - develop
+    - /^pre-.*$/i
+  when: manual
+
+production-ca:
+  stage: deploy
+  tags:
+    - production
+  environment: production
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker-compose -p backend_ca -f docker-compose.ca.yml pull
+    - docker-compose -p backend_ca -f docker-compose.ca.yml up -d
+  only:
+    - master
+    - /^hotfix//.*$/i
+  when: manual
+
+production-au:
+  stage: deploy
+  tags:
+    - production
+  environment: production
+  before_script:
+    - export ALLOWED_HOSTS=api.au.beautster.com
+    - export CORS_ALLOWED_ORIGINS=https://au.beautster.com,https://partners.au.beautster.com
+    - export SECRET_KEY="(^6rk+%ugkk17pj-c*3_y_r10g62u$jtmxkib8i33kgxt+!#pa"
+    - export AWS_STORAGE_BUCKET_NAME=head2nails-au-assets
+    - export AWS_S3_CUSTOM_DOMAIN=d3kjky8lrr00dw.cloudfront.net
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker-compose -p backend_au -f docker-compose.au.yml pull
+    - docker-compose -p backend_au -f docker-compose.au.yml up -d
+  only:
+    - master
+    - /^hotfix//.*$/i
+  when: manual
