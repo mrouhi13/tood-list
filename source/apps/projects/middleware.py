@@ -10,7 +10,7 @@ class AddProjectObjectToRequestMiddleware:
     def __call__(self, request):
         path_parts = request.path.split('/')
         request.project = None
-        if len(path_parts) >= 2:
+        if len(path_parts) >= 3:
             project_id = path_parts[2]
 
             if path_parts[2] == 'projects':
