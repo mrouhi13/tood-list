@@ -13,7 +13,7 @@ User = get_user_model()
 class TaskAPITests(APITestCase):
 
     def setUp(self) -> None:
-        self.user_1 = User.objects.create_user('user_1',  password='1234')
+        self.user_1 = User.objects.create_user('user_1', password='1234')
 
         self.client.login(username='user_1', password='1234')
 

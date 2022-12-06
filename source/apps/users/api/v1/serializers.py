@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import PasswordField
 
 User = get_user_model()

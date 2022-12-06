@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from apps.projects.constants import MemberRole
 from apps.projects.models import Member
 from apps.tasks.models import Task
-from apps.projects.constants import MemberRole
 from core.serializers import ProjectFilteredPrimaryKeyRelatedField
 
 User = get_user_model()

@@ -9,7 +9,7 @@ from apps.projects.models import Member, Project
 User = get_user_model()
 
 
-class TasksAPITests(APITestCase):
+class ProjectsAPITests(APITestCase):
 
     def setUp(self) -> None:
         self.user_1 = User.objects.create_user('user_1', password='1234')
