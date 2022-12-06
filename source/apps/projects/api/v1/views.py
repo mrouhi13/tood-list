@@ -39,7 +39,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=True, methods=['post'], url_path='add-member',
-            permission_classes=[IsProjectManager])
+            permission_classes=[IsAuthenticated, IsProjectManager])
     def add_member(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(data=request.data)
