@@ -32,7 +32,7 @@ testing:
     - build
   environment: staging
   script:
-    - apk update && apk add gcc make python3-dev musl-dev libc-dev postgresql-dev jpeg-dev zlib-dev geos geos-dev gdal gdal-dev
+    - apk update && apk add gcc make python3-dev musl-dev libc-dev postgresql-dev jpeg-dev
     - pip install -r requirements/testing.txt
     - pytest source/ --junitxml=report.xml
     - coverage report
@@ -74,7 +74,7 @@ staging:
     - /^pre-.*$/i
   when: manual
 
-production-ca:
+production:
   stage: deploy
   tags:
     - production
@@ -82,28 +82,8 @@ production-ca:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker-compose -p backend_ca -f docker-compose.ca.yml pull
-    - docker-compose -p backend_ca -f docker-compose.ca.yml up -d
-  only:
-    - master
-    - /^hotfix//.*$/i
-  when: manual
-
-production-au:
-  stage: deploy
-  tags:
-    - production
-  environment: production
-  before_script:
-    - export ALLOWED_HOSTS=api.au.beautster.com
-    - export CORS_ALLOWED_ORIGINS=https://au.beautster.com,https://partners.au.beautster.com
-    - export SECRET_KEY="(^6rk+%ugkk17pj-c*3_y_r10g62u$jtmxkib8i33kgxt+!#pa"
-    - export AWS_STORAGE_BUCKET_NAME=head2nails-au-assets
-    - export AWS_S3_CUSTOM_DOMAIN=d3kjky8lrr00dw.cloudfront.net
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker-compose -p backend_au -f docker-compose.au.yml pull
-    - docker-compose -p backend_au -f docker-compose.au.yml up -d
+    - docker-compose -p backend -f docker-compose.yml pull
+    - docker-compose -p backend -f docker-compose.yml up -d
   only:
     - master
     - /^hotfix//.*$/i
